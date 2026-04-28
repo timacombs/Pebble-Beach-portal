@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pebble Beach — Order Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --sand:#F5F0E8;
+  --deep:#1A1A14;
+  --pine:#2C4A3E;
+  --pine-light:#3D6B5A;
+  --gold:#B8965A;
+  --gold-light:#D4B078;
+  --fog:#E8E4DC;
+  --mist:#F0EDE7;
+  --text:#1A1A14;
+  --text-mid:#4A4A3E;
+  --text-soft:#7A7A6E;
+  --border:#D8D4CC;
+  --amber-bg:#FDF6E7;
+  --amber-text:#7A5C1E;
+  --amber-border:#E8C87A;
+  --green-bg:#EDF4F0;
+  --green-text:#2C4A3E;
+  --green-border:#A8C8B8;
+  --blue-bg:#EEF2F8;
+  --blue-text:#2A3F6A;
+  --blue-border:#A8B8D8;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--deep);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:0;}
+.login-card{width:380px;padding:56px 48px;background:var(--sand);position:relative;overflow:hidden;}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pine),var(--gold));}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-soft);margin-bottom:48px;}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--deep);line-height:1.2;margin-bottom:8px;}
+.login-sub{font-size:13px;color:var(--text-soft);margin-bottom:40px;font-weight:300;}
+.login-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-soft);margin-bottom:8px;display:block;}
+.login-input{width:100%;padding:12px 16px;background:var(--mist);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--deep);outline:none;transition:border-color 0.2s;}
+.login-input:focus{border-color:var(--pine);}
+.login-btn{width:100%;margin-top:24px;padding:14px;background:var(--pine);color:var(--sand);font-family:'DM Sans',sans-serif;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;transition:background 0.2s;}
+.login-btn:hover{background:var(--pine-light);}
+.login-error{font-size:12px;color:#8B2E2E;margin-top:12px;display:none;}
+.login-footer{font-size:11px;color:rgba(255,255,255,0.3);margin-top:32px;letter-spacing:0.05em;}
+
+/* PORTAL */
+#portal{display:none;}
+.topbar{background:var(--deep);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
+.topbar-brand{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.25em;text-transform:uppercase;color:var(--sand);display:flex;align-items:center;gap:16px;}
+.topbar-brand::after{content:'';width:1px;height:16px;background:rgba(255,255,255,0.2);}
+.topbar-sub{font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:0.08em;color:rgba(255,255,255,0.5);font-weight:300;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.role-toggle{font-size:11px;padding:6px 16px;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);background:transparent;cursor:pointer;letter-spacing:0.06em;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.role-toggle:hover{border-color:var(--gold);color:var(--gold);}
+.role-badge{font-size:11px;letter-spacing:0.08em;color:var(--gold);text-transform:uppercase;}
+.avatar-circle{width:32px;height:32px;border-radius:50%;background:var(--pine);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--sand);letter-spacing:0.05em;}
+
+.tabs-bar{background:var(--deep);border-top:1px solid rgba(255,255,255,0.08);padding:0 40px;display:flex;gap:0;overflow-x:auto;}
+.tab{font-size:12px;letter-spacing:0.1em;text-transform:uppercase;padding:14px 20px;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s;font-weight:300;}
+.tab:hover{color:rgba(255,255,255,0.7);}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+.main{padding:40px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:40px;}
+.stat-card{background:var(--mist);border:1px solid var(--border);padding:20px 24px;}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;line-height:1;color:var(--deep);}
+.stat-num.amber{color:var(--amber-text);}
+.stat-num.green{color:var(--green-text);}
+.stat-num.blue{color:var(--blue-text);}
+.stat-lbl{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-soft);margin-top:6px;}
+
+.section-head{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-soft);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+
+.order-card{background:var(--mist);border:1px solid var(--border);margin-bottom:8px;transition:border-color 0.2s;}
+.order-card:hover{border-color:var(--text-soft);}
+.order-card.action-needed{border-left:3px solid var(--gold);}
+.order-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;cursor:pointer;}
+.order-left{display:flex;align-items:center;gap:20px;}
+.order-num{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--deep);}
+.order-meta{display:flex;flex-direction:column;gap:2px;}
+.order-rsk{font-size:11px;color:var(--text-soft);letter-spacing:0.04em;}
+.order-note{font-size:12px;color:var(--text-mid);font-style:italic;}
+.order-right{display:flex;align-items:center;gap:16px;}
+.order-date{font-size:12px;color:var(--text-soft);}
+.progress-text{font-size:11px;color:var(--text-soft);}
+.status-pill{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 12px;font-weight:500;}
+.s-complete{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);}
+.s-action{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);}
+.s-pending{background:var(--fog);color:var(--text-soft);border:1px solid var(--border);}
+.s-review{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border);}
+.chevron{font-size:10px;color:var(--text-soft);transition:transform 0.2s;}
+.chevron.open{transform:rotate(90deg);}
+
+.order-body{display:none;border-top:1px solid var(--border);padding:24px;}
+.order-body.open{display:block;}
+
+.stages{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.stage-row{display:flex;align-items:center;gap:12px;}
+.stage-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;color:transparent;cursor:default;}
+.stage-dot.done{background:var(--pine);border-color:var(--pine);color:var(--sand);}
+.stage-dot.needs-action{background:var(--amber-bg);border-color:var(--amber-border);}
+.stage-dot.admin-clickable{cursor:pointer;}
+.stage-dot.admin-clickable:hover:not(.done){background:var(--fog);}
+.stage-label{font-size:13px;color:var(--text);}
+.stage-label.done{color:var(--text-soft);text-decoration:line-through;}
+.stage-label.needs-action{color:var(--amber-text);font-weight:500;}
+
+.divider{height:1px;background:var(--border);margin:20px 0;}
+
+.proof-section,.po-section{background:var(--fog);border:1px solid var(--border);padding:20px;margin-bottom:12px;}
+.section-mini-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-soft);margin-bottom:12px;}
+.proof-file{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--pine);cursor:pointer;margin-bottom:14px;}
+.proof-file:hover{color:var(--pine-light);}
+.proof-actions{display:flex;gap:10px;}
+.btn{font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:0.06em;padding:10px 20px;cursor:pointer;border:1px solid;transition:all 0.15s;text-transform:uppercase;}
+.btn-approve{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);}
+.btn-approve:hover{background:var(--green-text);color:var(--sand);}
+.btn-changes{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border);}
+.btn-changes:hover{background:var(--amber-text);color:var(--sand);}
+.btn-admin{background:transparent;color:var(--text-mid);border-color:var(--border);}
+.btn-admin:hover{background:var(--deep);color:var(--sand);border-color:var(--deep);}
+.btn-primary{background:var(--pine);color:var(--sand);border-color:var(--pine);}
+.btn-primary:hover{background:var(--pine-light);}
+
+.po-input-row{display:flex;gap:10px;align-items:center;}
+.po-input{flex:1;padding:10px 14px;background:var(--sand);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--deep);outline:none;}
+.po-input:focus{border-color:var(--pine);}
+
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;}
+
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--deep);color:var(--sand);font-size:12px;letter-spacing:0.06em;padding:12px 24px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;}
+
+.empty-state{text-align:center;padding:80px 40px;color:var(--text-soft);font-size:14px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Swannies Golf</div>
+    <div class="login-title">Pebble Beach<br>Order Portal</div>
+    <div class="login-sub">Secure access for authorized buyers</div>
+    <label class="login-label">Password</label>
+    <input class="login-input" type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">Enter Portal</button>
+    <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+  </div>
+  <div class="login-footer">© 2026 Swannies Golf — Confidential</div>
+</div>
+
+<!-- PORTAL -->
+<div id="portal">
+  <div class="topbar">
+    <div class="topbar-brand">
+      Swannies Golf
+      <span class="topbar-sub">Pebble Beach Order Portal</span>
+    </div>
+    <div class="topbar-right">
+      <span class="role-badge" id="role-badge">Pebble Beach</span>
+      <button class="role-toggle" onclick="toggleRole()" id="role-btn">Admin view</button>
+      <div class="avatar-circle" id="avatar">PB</div>
+    </div>
+  </div>
+  <div class="tabs-bar" id="tabs-bar"></div>
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" id="s-total">—</div><div class="stat-lbl">Total orders</div></div>
+      <div class="stat-card"><div class="stat-num amber" id="s-action">—</div><div class="stat-lbl">Need action</div></div>
+      <div class="stat-card"><div class="stat-num green" id="s-po">—</div><div class="stat-lbl">POs received</div></div>
+      <div class="stat-card"><div class="stat-num blue" id="s-pending">—</div><div class="stat-lbl">In progress</div></div>
+    </div>
+    <div class="section-head" id="shop-label">Orders</div>
+    <div id="orders-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PASSWORD = 'pebble';
+
+const shops = {
+  'lone-cypress': {
+    label: 'Lone Cypress',
+    stats: { total:9, action:2, po:6, pending:3 },
+    orders: [
+      { num:'62775', rsk:'RSK 94463', date:'Jan 1, 2026', status:'complete', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'62777', rsk:'RSK 94464', date:'Feb 15, 2026', status:'complete', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'62778', rsk:'RSK 94467', date:'Mar 15, 2026', status:'complete', po:'567304-410', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true},{l:'Embroider, ship & invoice',d:true}
+      ]},
+      { num:'78860', rsk:'RSK 105600', date:'Apr 15, 2026', note:'Dad & Lad Companion', status:'action', po:'567664-410', proof:'proof_78860.pdf', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'Awaiting final approval',d:false,a:true},{l:'PO supplied',d:true},{l:'PO validated in AM',d:true},{l:'Release hold & embroider',d:false}
+      ]},
+      { num:'62779', rsk:'RSK 94468', date:'May 1, 2026', status:'action', po:'567515-410', proof:'proof_62779_revised.pdf', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Revision requested — logo removed from Fetch tee',d:true},{l:'Revised proof awaiting approval',d:false,a:true},{l:'PO shared with team',d:false},{l:'PO validated in AM',d:false},{l:'Release hold & embroider',d:false}
+      ]},
+      { num:'78879', rsk:'RSK 105627', date:'Jul 1, 2026', status:'pending', stages:[
+        {l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approved',d:false},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}
+      ]},
+      { num:'78880', rsk:'RSK 105629', date:'Aug 1, 2026', status:'pending', stages:[
+        {l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approved',d:false},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}
+      ]},
+      { num:'79711', rsk:'RSK 105635', date:'Aug 15, 2026', note:'Custom Vandyke Hoodie', status:'review', po:'567779-485', stages:[
+        {l:'Mock approved & shared',d:true},{l:'PO validated & added to SO',d:true},{l:'Submitted to overseas manufacturer',d:true}
+      ]},
+      { num:'78881', rsk:'RSK 105630', date:'Oct 1, 2026', status:'pending', stages:[
+        {l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approved',d:false},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}
+      ]}
+    ]
+  },
+  'spyglass': {
+    label: 'Spyglass',
+    stats: { total:3, action:1, po:2, pending:1 },
+    orders: [
+      { num:'62780', rsk:'RSK 94471', date:'Mar 1, 2026', status:'complete', po:'567517-420', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'62782', rsk:'RSK 94474', date:'May 1, 2026', status:'action', proof:'proof_62782.pdf', stages:[
+        {l:'Logo proof created',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'78882', rsk:'RSK 105632', date:'Jul 15, 2026', status:'pending', stages:[
+        {l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approved',d:false},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}
+      ]}
+    ]
+  },
+  'juniors': {
+    label: 'Juniors',
+    stats: { total:7, action:1, po:4, pending:3 },
+    orders: [
+      { num:'62784', rsk:'RSK 94485', date:'Jan 1, 2026', status:'complete', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'62787', rsk:'RSK 94486', date:'Feb 15, 2026', status:'complete', po:'567525-440', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'75247', date:'Feb 15, 2026', note:'Jr. Girls', status:'complete', po:'567529-440', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'62803', rsk:'RSK 94487', date:'May 1, 2026', status:'complete', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'79626', date:'Jun 15, 2026', note:'Hats only', status:'action', stages:[
+        {l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approval needed',d:false,a:true},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}
+      ]},
+      { num:'79628', date:'Aug 1, 2026', status:'pending', stages:[
+        {l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approved',d:false},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}
+      ]},
+      { num:'79691', date:'Oct 1, 2026', status:'pending', stages:[
+        {l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approved',d:false},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}
+      ]}
+    ]
+  },
+  'del-monte': {
+    label: 'Del Monte',
+    stats: { total:1, action:1, po:0, pending:1 },
+    orders: [
+      { num:'62783', rsk:'RSK 94484', date:'May 1, 2026', status:'action', stages:[
+        {l:'Reached out to PB for new logo',d:true},{l:'Sew out facilitated with Brandon',d:false,a:true},{l:'New logo sew out approved',d:false},{l:'Logo proof mocks completed',d:false},{l:'Logo proofs approved',d:false},{l:'PO supplied',d:false}
+      ]}
+    ]
+  },
+  'the-hay': {
+    label: 'The Hay',
+    stats: { total:1, action:0, po:1, pending:0 },
+    orders: [
+      { num:'79710', rsk:'RSK 105634', date:'Aug 15, 2026', note:'Custom Vandyke Hoodie', status:'review', po:'567778-485', stages:[
+        {l:'Mock approved & shared',d:true},{l:'PO validated & added to SO',d:true},{l:'Submitted to overseas manufacturer',d:true}
+      ]}
+    ]
+  },
+  'us-open': {
+    label: 'US Open',
+    stats: { total:4, action:0, po:4, pending:0 },
+    orders: [
+      { num:'69236', rsk:'RSK 98968', date:'Mar 1, 2026', status:'complete', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'69239', rsk:'RSK 98976', date:'Apr 1, 2026', status:'complete', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'75293', rsk:'RSK 103317', date:'Jun 1, 2026', note:"Men's Custom Pic, Vandyke & Owen", status:'complete', po:'567195-485', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'Strike-offs approved',d:true},{l:'PO supplied',d:true}
+      ]},
+      { num:'76060', rsk:'RSK 103653', date:'Jun 1, 2026', note:"Jr's Custom Vandyke", status:'complete', stages:[
+        {l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'Strike-offs approved',d:true},{l:'PO supplied',d:true}
+      ]}
+    ]
+  }
+};
+
+let currentShop = 'lone-cypress';
+let isAdmin = false;
+let openCards = {};
+
+function tryLogin() {
+  const val = document.getElementById('pw-input').value;
+  if(val.toLowerCase() === PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('portal').style.display = 'block';
+    buildTabs();
+    renderShop();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function buildTabs() {
+  const bar = document.getElementById('tabs-bar');
+  bar.innerHTML = '';
+  Object.entries(shops).forEach(([key, shop]) => {
+    const t = document.createElement('div');
+    t.className = 'tab' + (key === currentShop ? ' active' : '');
+    t.textContent = shop.label;
+    t.onclick = () => { currentShop = key; openCards = {}; document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); renderShop(); };
+    bar.appendChild(t);
+  });
+}
+
+function renderShop() {
+  const shop = shops[currentShop];
+  document.getElementById('s-total').textContent = shop.stats.total;
+  document.getElementById('s-action').textContent = shop.stats.action;
+  document.getElementById('s-po').textContent = shop.stats.po;
+  document.getElementById('s-pending').textContent = shop.stats.pending;
+  document.getElementById('shop-label').textContent = shop.label + ' — Orders';
+
+  const list = document.getElementById('orders-list');
+  list.innerHTML = '';
+
+  shop.orders.forEach((order, idx) => {
+    const isOpen = openCards[currentShop + '_' + idx];
+    const doneCount = order.stages.filter(s=>s.d).length;
+    const total = order.stages.length;
+    const hasAction = order.stages.some(s=>s.a && !s.d);
+
+    const statusMap = {
+      complete: ['Complete', 's-complete'],
+      action: ['Action needed', 's-action'],
+      pending: ['Upcoming', 's-pending'],
+      review: ['In production', 's-review']
+    };
+    const [slabel, sclass] = statusMap[order.status] || ['—','s-pending'];
+
+    const card = document.createElement('div');
+    card.className = 'order-card' + (order.status === 'action' ? ' action-needed' : '');
+
+    const stagesHtml = order.stages.map((s, si) => {
+      const dotClass = s.d ? 'done' : (s.a ? 'needs-action' : '');
+      const adminClick = isAdmin ? ` admin-clickable" onclick="toggleStage(${idx},${si})` : '';
+      const labelClass = s.d ? 'done' : (s.a ? 'needs-action' : '');
+      return `<div class="stage-row">
+        <div class="stage-dot ${dotClass}${adminClick}">${s.d ? '✓' : ''}</div>
+        <span class="stage-label ${labelClass}">${s.l}</span>
+      </div>`;
+    }).join('');
+
+    const proofHtml = order.proof ? `
+      <div class="proof-section">
+        <div class="section-mini-label">Logo coloring proof</div>
+        <div class="proof-file" onclick="showToast('Opening proof — in a live build this PDF would open directly.')">📄 ${order.proof}</div>
+        <div class="proof-actions">
+          <button class="btn btn-approve" onclick="showToast('Proof approved. Swannies team has been notified.')">Approve proof</button>
+          <button class="btn btn-changes" onclick="showToast('Change request submitted. Team will follow up.')">Request changes</button>
+        </div>
+      </div>` : '';
+
+    const poHtml = (order.status === 'action' || order.status === 'pending') ? `
+      <div class="po-section">
+        <div class="section-mini-label">Submit PO number</div>
+        <div class="po-input-row">
+          <input class="po-input" type="text" id="po-${idx}" placeholder="e.g. 567664-410" value="${order.po || ''}">
+          <button class="btn btn-primary" onclick="submitPO(${idx})">Submit PO</button>
+        </div>
+      </div>` : '';
+
+    const adminHtml = isAdmin ? `
+      <div class="divider"></div>
+      <div class="admin-actions">
+        <button class="btn btn-admin" onclick="showToast('Proof uploaded. PB has been notified.')">Upload proof</button>
+        <button class="btn btn-admin" onclick="showToast('Hold released.')">Release hold</button>
+        <button class="btn btn-admin" onclick="showToast('Notes saved.')">Add order notes</button>
+        <button class="btn btn-admin" onclick="showToast('PO mismatch flagged. Team alerted.')">Flag PO mismatch</button>
+      </div>` : '';
+
+    card.innerHTML = `
+      <div class="order-header" onclick="toggleCard(${idx})">
+        <div class="order-left">
+          <div class="order-num">Order #${order.num}</div>
+          <div class="order-meta">
+            ${order.rsk ? `<span class="order-rsk">${order.rsk}</span>` : ''}
+            ${order.note ? `<span class="order-note">${order.note}</span>` : ''}
+          </div>
+        </div>
+        <div class="order-right">
+          <span class="order-date">Due ${order.date}</span>
+          <span class="progress-text">${doneCount}/${total} steps</span>
+          <span class="status-pill ${sclass}">${slabel}</span>
+          <span class="chevron ${isOpen ? 'open' : ''}">▶</span>
+        </div>
+      </div>
+      <div class="order-body ${isOpen ? 'open' : ''}">
+        <div class="stages">${stagesHtml}</div>
+        ${proofHtml}
+        ${poHtml}
+        ${adminHtml}
+      </div>`;
+
+    list.appendChild(card);
+  });
+}
+
+function toggleCard(idx) {
+  const key = currentShop + '_' + idx;
+  openCards[key] = !openCards[key];
+  renderShop();
+}
+
+function toggleStage(orderIdx, stageIdx) {
+  shops[currentShop].orders[orderIdx].stages[stageIdx].d = !shops[currentShop].orders[orderIdx].stages[stageIdx].d;
+  renderShop();
+}
+
+function submitPO(idx) {
+  const val = document.getElementById('po-' + idx).value.trim();
+  if(!val) { showToast('Please enter a PO number before submitting.'); return; }
+  showToast('PO ' + val + ' submitted. Your team will validate shortly.');
+}
+
+function toggleRole() {
+  isAdmin = !isAdmin;
+  document.getElementById('role-badge').textContent = isAdmin ? 'Admin' : 'Pebble Beach';
+  document.getElementById('role-btn').textContent = isAdmin ? 'PB view' : 'Admin view';
+  document.getElementById('avatar').textContent = isAdmin ? 'SW' : 'PB';
+  openCards = {};
+  renderShop();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

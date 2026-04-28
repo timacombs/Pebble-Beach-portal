@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pebble Beach — Order Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --sand:#F5F0E8;--deep:#1A1A14;--pine:#2C4A3E;--pine-light:#3D6B5A;
+  --gold:#B8965A;--fog:#E8E4DC;--mist:#F0EDE7;
+  --text:#1A1A14;--text-mid:#4A4A3E;--text-soft:#7A7A6E;--border:#D8D4CC;
+  --amber-bg:#FDF6E7;--amber-text:#7A5C1E;--amber-border:#E8C87A;
+  --green-bg:#EDF4F0;--green-text:#2C4A3E;--green-border:#A8C8B8;
+  --blue-bg:#EEF2F8;--blue-text:#2A3F6A;--blue-border:#A8B8D8;
+  --red-bg:#FDF0F0;--red-text:#6A2A2A;--red-border:#D8A8A8;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--text);min-height:100vh;}
+
+#login-screen{position:fixed;inset:0;background:var(--deep);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;}
+.login-card{width:400px;padding:56px 48px;background:var(--sand);position:relative;}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pine),var(--gold));}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--text-soft);margin-bottom:48px;}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:300;color:var(--deep);line-height:1.2;margin-bottom:8px;}
+.login-sub{font-size:13px;color:var(--text-soft);margin-bottom:40px;}
+.login-label{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-soft);margin-bottom:8px;display:block;}
+.login-input{width:100%;padding:12px 16px;background:var(--mist);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--deep);outline:none;margin-bottom:12px;}
+.login-input:focus{border-color:var(--pine);}
+.login-btn{width:100%;margin-top:12px;padding:14px;background:var(--pine);color:var(--sand);font-family:'DM Sans',sans-serif;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;}
+.login-btn:hover{background:var(--pine-light);}
+.login-error{font-size:12px;color:#8B2E2E;margin-top:12px;display:none;}
+.login-footer{font-size:11px;color:rgba(255,255,255,0.3);margin-top:32px;}
+
+#portal{display:none;}
+.topbar{background:var(--deep);padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
+.topbar-brand{font-family:'Cormorant Garamond',serif;font-size:13px;letter-spacing:0.25em;text-transform:uppercase;color:var(--sand);display:flex;align-items:center;gap:16px;}
+.topbar-brand::after{content:'';width:1px;height:16px;background:rgba(255,255,255,0.2);}
+.topbar-sub{font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:0.08em;color:rgba(255,255,255,0.5);font-weight:300;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.role-badge{font-size:11px;letter-spacing:0.08em;color:var(--gold);text-transform:uppercase;}
+.top-btn{font-size:11px;padding:6px 14px;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.5);background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;}
+.top-btn:hover{border-color:rgba(255,255,255,0.5);color:white;}
+.avatar-circle{width:32px;height:32px;border-radius:50%;background:var(--pine);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--sand);}
+
+.tabs-bar{background:var(--deep);border-top:1px solid rgba(255,255,255,0.08);padding:0 40px;display:flex;overflow-x:auto;}
+.tab{font-size:12px;letter-spacing:0.1em;text-transform:uppercase;padding:14px 20px;color:rgba(255,255,255,0.4);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s;}
+.tab:hover{color:rgba(255,255,255,0.7);}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+.main{padding:40px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+.stat-card{background:var(--mist);border:1px solid var(--border);padding:20px 24px;}
+.stat-num{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;line-height:1;}
+.stat-num.amber{color:var(--amber-text);}
+.stat-num.green{color:var(--green-text);}
+.stat-num.blue{color:var(--blue-text);}
+.stat-lbl{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-soft);margin-top:6px;}
+.toolbar{display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap;}
+.filter-select{padding:8px 14px;background:var(--mist);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none;cursor:pointer;}
+.section-head{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-soft);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+
+.order-card{background:var(--mist);border:1px solid var(--border);margin-bottom:8px;}
+.order-card.action-needed{border-left:3px solid var(--gold);}
+.order-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;}
+.order-left{display:flex;align-items:center;gap:16px;}
+.order-num{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;}
+.order-meta{display:flex;flex-direction:column;gap:2px;}
+.order-rsk{font-size:11px;color:var(--text-soft);}
+.order-note{font-size:12px;color:var(--text-mid);font-style:italic;}
+.order-shop-tag{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:2px 8px;background:var(--fog);border:1px solid var(--border);color:var(--text-soft);}
+.order-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end;}
+.order-date{font-size:12px;color:var(--text-soft);}
+.progress-text{font-size:11px;color:var(--text-soft);}
+.status-pill{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;font-weight:500;}
+.s-complete{background:var(--green-bg);color:var(--green-text);border:1px solid var(--green-border);}
+.s-action{background:var(--amber-bg);color:var(--amber-text);border:1px solid var(--amber-border);}
+.s-pending{background:var(--fog);color:var(--text-soft);border:1px solid var(--border);}
+.s-review{background:var(--blue-bg);color:var(--blue-text);border:1px solid var(--blue-border);}
+.chevron{font-size:10px;color:var(--text-soft);transition:transform 0.2s;margin-left:4px;}
+.chevron.open{transform:rotate(90deg);}
+
+.order-body{display:none;border-top:1px solid var(--border);padding:24px;}
+.order-body.open{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.sub-label{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-soft);margin-bottom:10px;}
+
+.stages{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.stage-row{display:flex;align-items:center;gap:10px;}
+.stage-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;}
+.stage-dot.done{background:var(--pine);border-color:var(--pine);color:var(--sand);}
+.stage-dot.needs-action{background:var(--amber-bg);border-color:var(--amber-border);}
+.stage-dot.clickable{cursor:pointer;}
+.stage-dot.clickable:hover:not(.done){background:var(--fog);}
+.stage-label{font-size:13px;}
+.stage-label.done{color:var(--text-soft);text-decoration:line-through;}
+.stage-label.needs-action{color:var(--amber-text);font-weight:500;}
+
+.panel{background:var(--fog);border:1px solid var(--border);padding:18px;margin-bottom:12px;}
+.custom-flag{background:var(--red-bg);border:2px solid var(--red-border);padding:10px 14px;font-size:11px;font-weight:500;color:var(--red-text);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;}
+.proof-link{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--pine);text-decoration:none;margin-bottom:14px;}
+.proof-link:hover{color:var(--pine-light);}
+.proof-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+.btn{font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:0.05em;padding:9px 18px;cursor:pointer;border:1px solid;transition:all 0.15s;text-transform:uppercase;background:transparent;}
+.btn-approve{background:var(--green-bg);color:var(--green-text);border-color:var(--green-border);}
+.btn-approve:hover{background:var(--green-text);color:var(--sand);}
+.btn-changes{background:var(--amber-bg);color:var(--amber-text);border-color:var(--amber-border);}
+.btn-changes:hover{background:var(--amber-text);color:var(--sand);}
+.btn-ghost{color:var(--text-mid);border-color:var(--border);}
+.btn-ghost:hover{background:var(--deep);color:var(--sand);border-color:var(--deep);}
+.btn-primary{background:var(--pine);color:var(--sand);border-color:var(--pine);}
+.btn-primary:hover{background:var(--pine-light);}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red-border);}
+.btn-danger:hover{background:var(--red-text);color:var(--sand);}
+.btn-sm{padding:6px 12px;font-size:11px;}
+
+.field-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.field-input,.field-select,.field-textarea{flex:1;padding:9px 12px;background:var(--sand);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--deep);outline:none;}
+.field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--pine);}
+.field-textarea{resize:vertical;min-height:70px;width:100%;}
+.field-value{font-size:13px;color:var(--text-mid);margin-top:6px;}
+
+.qc-checks{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.qc-row{display:flex;align-items:center;gap:10px;font-size:13px;}
+.qc-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--pine);cursor:pointer;flex-shrink:0;}
+
+.admin-strip{display:flex;gap:8px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);margin-top:12px;grid-column:1/-1;}
+
+.comments-section{margin-top:16px;}
+.comment{background:var(--sand);border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;}
+.comment-meta{font-size:11px;color:var(--text-soft);margin-bottom:4px;}
+.comment-text{font-size:13px;color:var(--text);}
+.comment-input-row{display:flex;gap:8px;margin-top:8px;}
+.comment-input{flex:1;padding:9px 12px;background:var(--sand);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--deep);outline:none;}
+.comment-input:focus{border-color:var(--pine);}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:none;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--sand);width:660px;position:relative;margin-bottom:60px;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pine),var(--gold));}
+.modal-head{padding:28px 32px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;}
+.modal-close{font-size:18px;cursor:pointer;color:var(--text-soft);background:none;border:none;}
+.modal-body{padding:24px 32px;}
+.modal-footer{padding:16px 32px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+.form-row{margin-bottom:14px;}
+.form-label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-soft);margin-bottom:6px;display:block;}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;background:var(--mist);border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--deep);outline:none;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--pine);}
+.form-textarea{resize:vertical;min-height:70px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.stage-edit-list{display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;border:1px solid var(--border);padding:10px;background:var(--mist);}
+.stage-edit-row{display:flex;align-items:center;gap:8px;}
+.stage-edit-row input[type=checkbox]{accent-color:var(--pine);}
+.stage-edit-row span{font-size:12px;color:var(--text);flex:1;}
+.remove-stage{font-size:11px;color:var(--red-text);cursor:pointer;background:none;border:none;padding:0;flex-shrink:0;}
+.add-stage-row{display:flex;gap:8px;margin-top:8px;}
+
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--deep);color:var(--sand);font-size:12px;letter-spacing:0.05em;padding:12px 24px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:9999;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Swannies Golf</div>
+    <div class="login-title">Pebble Beach<br>Order Portal</div>
+    <div class="login-sub">Secure access for authorized users</div>
+    <label class="login-label">Password</label>
+    <input class="login-input" type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')tryLogin()">
+    <button class="login-btn" onclick="tryLogin()">Enter Portal</button>
+    <div class="login-error" id="login-error">Incorrect password. Please try again.</div>
+  </div>
+  <div class="login-footer">© 2026 Swannies Golf — Confidential</div>
+</div>
+
+<!-- EDIT MODAL (Admin + PB) -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="edit-modal-title">Edit Order</div>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-shop-key">
+      <input type="hidden" id="edit-order-idx">
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Order #</label>
+          <input class="form-input" id="edit-num" type="text">
+        </div>
+        <div class="form-row">
+          <label class="form-label">RSK #</label>
+          <input class="form-input" id="edit-rsk" type="text">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Due Date</label>
+          <input class="form-input" id="edit-date" type="text" placeholder="e.g. Jan 1, 2026">
+        </div>
+        <div class="form-row" id="edit-status-row">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="edit-status">
+            <option value="pending">Upcoming</option>
+            <option value="action">Action needed</option>
+            <option value="review">In production</option>
+            <option value="complete">Complete</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notes / Description</label>
+        <input class="form-input" id="edit-note" type="text">
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Quantities</label>
+          <input class="form-input" id="edit-qty" type="text" placeholder="e.g. S:12, M:24, L:24, XL:12">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Sizes</label>
+          <input class="form-input" id="edit-sizes" type="text" placeholder="e.g. S, M, L, XL, 2XL">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">PO Number</label>
+        <input class="form-input" id="edit-po" type="text" placeholder="e.g. 567664-410">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Logo instructions</label>
+        <textarea class="form-textarea" id="edit-logo-instructions" placeholder="e.g. Logo placement, thread colors, size, any special notes..."></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Tagging instructions</label>
+        <textarea class="form-textarea" id="edit-tag-instructions" placeholder="e.g. Hang tag placement, special tagging requirements..."></textarea>
+      </div>
+      <!-- Admin only fields -->
+      <div id="admin-edit-fields">
+        <div class="form-row">
+          <label class="form-label">Logo Proof — Google Drive Link</label>
+          <input class="form-input" id="edit-proof-url" type="text" placeholder="https://drive.google.com/file/d/...">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Logo Proof — Display Name</label>
+          <input class="form-input" id="edit-proof-name" type="text" placeholder="e.g. proof_78860_v2.pdf">
+        </div>
+        <div class="form-row">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input type="checkbox" id="edit-custom" style="width:15px;height:15px;accent-color:var(--pine);cursor:pointer;">
+            <label for="edit-custom" class="form-label" style="margin:0;cursor:pointer;">Custom order (NO 15% LID discount)</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Shop</label>
+          <select class="form-select" id="edit-shop-select">
+            <option value="lone-cypress">Lone Cypress</option>
+            <option value="spyglass">Spyglass</option>
+            <option value="juniors">Juniors</option>
+            <option value="del-monte">Del Monte</option>
+            <option value="the-hay">The Hay</option>
+            <option value="us-open">US Open</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Stage checklist</label>
+          <div class="stage-edit-list" id="edit-stages-list"></div>
+          <div class="add-stage-row">
+            <input class="form-input" id="new-stage-input" type="text" placeholder="Add new stage...">
+            <button class="btn btn-ghost btn-sm" onclick="addEditStage()">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div id="admin-delete-btn"></div>
+      <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditOrder()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ORDER MODAL (Admin only) -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Add New Order</div>
+      <button class="modal-close" onclick="closeAddModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Order #</label>
+          <input class="form-input" id="new-num" type="text" placeholder="e.g. 78900">
+        </div>
+        <div class="form-row">
+          <label class="form-label">RSK #</label>
+          <input class="form-input" id="new-rsk" type="text" placeholder="e.g. RSK 105700">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Shop</label>
+          <select class="form-select" id="new-shop">
+            <option value="lone-cypress">Lone Cypress</option>
+            <option value="spyglass">Spyglass</option>
+            <option value="juniors">Juniors</option>
+            <option value="del-monte">Del Monte</option>
+            <option value="the-hay">The Hay</option>
+            <option value="us-open">US Open</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Due Date</label>
+          <input class="form-input" id="new-date" type="text" placeholder="e.g. Sep 1, 2026">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notes / Description</label>
+        <input class="form-input" id="new-note" type="text" placeholder="e.g. Custom Vandyke Hoodie">
+      </div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">PO Number (if known)</label>
+          <input class="form-input" id="new-po" type="text" placeholder="e.g. 567664-410">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="new-status">
+            <option value="pending">Upcoming</option>
+            <option value="action">Action needed</option>
+            <option value="review">In production</option>
+            <option value="complete">Complete</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" id="new-custom" style="width:15px;height:15px;accent-color:var(--pine);cursor:pointer;">
+          <label for="new-custom" class="form-label" style="margin:0;cursor:pointer;">Custom order (NO 15% LID discount)</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveNewOrder()">Add Order</button>
+    </div>
+  </div>
+</div>
+
+<div id="portal">
+  <div class="topbar">
+    <div class="topbar-brand">Swannies Golf<span class="topbar-sub">Pebble Beach Order Portal</span></div>
+    <div class="topbar-right">
+      <span class="role-badge" id="role-badge">Pebble Beach</span>
+      <a href="https://www.canva.com/design/DAGvUdDkjpY/Hm8VLAMvygmC9vttDI_ujQ/view?utm_content=DAGvUdDkjpY&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h8345e8d0eb" target="_blank" class="top-btn">View Catalog</a>
+      <button class="top-btn" onclick="logout()">Sign out</button>
+      <div class="avatar-circle" id="avatar">PB</div>
+    </div>
+  </div>
+  <div class="tabs-bar" id="tabs-bar"></div>
+  <div class="main" id="main-content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PB_PASS='pebble';
+const ADMIN_PASS='Ayden9203!';
+const FORMSPREE='https://formspree.io/f/mzdyllvy';
+const DRIVE_FOLDER='https://drive.google.com/drive/u/0/folders/1cBN0kvRBTMILf7Dq6OvuvQmOo5JIFmO8';
+
+let isAdmin=false;
+let currentShop='all';
+let openCards={};
+let statusFilter='all';
+let editStages=[];
+
+const defaultStages=()=>[
+  {l:'Inventory picked & secured',d:false},
+  {l:'Order placed on hold',d:false},
+  {l:'Logo proof created',d:false},
+  {l:'Proof approved by PB',d:false,a:false},
+  {l:'PO supplied',d:false},
+  {l:'PO validated in AM',d:false},
+  {l:'Order notes added & hold released',d:false},
+  {l:'Embroider, tag & ship',d:false},
+  {l:'Invoice sent',d:false}
+];
+
+const shops={
+  'lone-cypress':{label:'Lone Cypress',orders:[
+    {num:'62775',rsk:'RSK 94463',date:'Jan 1, 2026',status:'complete',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true},{l:'Embroider, tag & ship',d:true},{l:'Invoice sent',d:true}]},
+    {num:'62777',rsk:'RSK 94464',date:'Feb 15, 2026',status:'complete',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true},{l:'Embroider, tag & ship',d:true},{l:'Invoice sent',d:true}]},
+    {num:'62778',rsk:'RSK 94467',date:'Mar 15, 2026',status:'complete',po:'567304-410',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true},{l:'Embroider, ship & invoice',d:true}]},
+    {num:'78860',rsk:'RSK 105600',date:'Apr 15, 2026',note:'Dad & Lad Companion',status:'action',po:'567664-410',proofUrl:'',proofName:'proof_78860.pdf',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'Awaiting final approval',d:false,a:true},{l:'PO supplied',d:true},{l:'PO validated in AM',d:true},{l:'Release hold & embroider',d:false}]},
+    {num:'62779',rsk:'RSK 94468',date:'May 1, 2026',status:'action',po:'567515-410',proofUrl:'',proofName:'proof_62779_revised.pdf',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:[{l:'Logo proof mocks completed',d:true},{l:'Revision requested',d:true},{l:'Revised proof awaiting approval',d:false,a:true},{l:'PO shared with team',d:false},{l:'PO validated in AM',d:false},{l:'Release hold & embroider',d:false}]},
+    {num:'78879',rsk:'RSK 105627',date:'Jul 1, 2026',status:'pending',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:defaultStages()},
+    {num:'78880',rsk:'RSK 105629',date:'Aug 1, 2026',status:'pending',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:defaultStages()},
+    {num:'79711',rsk:'RSK 105635',date:'Aug 15, 2026',note:'Custom Vandyke Hoodie',status:'review',po:'567779-485',custom:true,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:[{l:'Mock approved & shared',d:true},{l:'PO validated & added to SO',d:true},{l:'Submitted to overseas manufacturer',d:true}]},
+    {num:'78881',rsk:'RSK 105630',date:'Oct 1, 2026',status:'pending',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:defaultStages()}
+  ]},
+  'spyglass':{label:'Spyglass',orders:[
+    {num:'62780',rsk:'RSK 94471',date:'Mar 1, 2026',status:'complete',po:'567517-420',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true},{l:'Embroider, tag & ship',d:true}]},
+    {num:'62782',rsk:'RSK 94474',date:'May 1, 2026',status:'action',proofUrl:'',proofName:'proof_62782.pdf',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:[{l:'Logo proof created',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true},{l:'PO validated',d:false,a:true},{l:'Release hold & embroider',d:false}]},
+    {num:'78882',rsk:'RSK 105632',date:'Jul 15, 2026',status:'pending',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:defaultStages()}
+  ]},
+  'juniors':{label:'Juniors',orders:[
+    {num:'62784',rsk:'RSK 94485',date:'Jan 1, 2026',status:'complete',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}]},
+    {num:'62787',rsk:'RSK 94486',date:'Feb 15, 2026',status:'complete',po:'567525-440',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}]},
+    {num:'75247',date:'Feb 15, 2026',note:'Jr. Girls',status:'complete',po:'567529-440',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}]},
+    {num:'62803',rsk:'RSK 94487',date:'May 1, 2026',status:'complete',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}]},
+    {num:'79626',date:'Jun 15, 2026',note:'Hats only',status:'action',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:[{l:'Inventory picked & secured',d:false},{l:'Order placed on hold',d:false},{l:'Logo proof created',d:false},{l:'Proof approval needed',d:false,a:true},{l:'PO supplied',d:false},{l:'PO validated',d:false},{l:'Release hold, embroider, tag & ship',d:false}]},
+    {num:'79628',date:'Aug 1, 2026',status:'pending',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:defaultStages()},
+    {num:'79691',date:'Oct 1, 2026',status:'pending',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:defaultStages()}
+  ]},
+  'del-monte':{label:'Del Monte',orders:[
+    {num:'62783',rsk:'RSK 94484',date:'May 1, 2026',status:'action',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:[{l:'Reached out to PB for new logo',d:true},{l:'Sew out facilitated with Brandon',d:false,a:true},{l:'New logo sew out approved',d:false},{l:'Logo proof mocks completed',d:false},{l:'Logo proofs approved',d:false},{l:'PO supplied',d:false}]}
+  ]},
+  'the-hay':{label:'The Hay',orders:[
+    {num:'79710',rsk:'RSK 105634',date:'Aug 15, 2026',note:'Custom Vandyke Hoodie',status:'review',po:'567778-485',custom:true,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',qc:{inv:false,emb:false,tags:false,qci:false,packed:false},stages:[{l:'Mock approved & shared',d:true},{l:'PO validated & added to SO',d:true},{l:'Submitted to overseas manufacturer',d:true}]}
+  ]},
+  'us-open':{label:'US Open',orders:[
+    {num:'69236',rsk:'RSK 98968',date:'Mar 1, 2026',status:'complete',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}]},
+    {num:'69239',rsk:'RSK 98976',date:'Apr 1, 2026',status:'complete',custom:false,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'PO supplied',d:true}]},
+    {num:'75293',rsk:'RSK 103317',date:'Jun 1, 2026',note:"Men's Custom Pic, Vandyke & Owen",status:'complete',po:'567195-485',custom:true,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'Strike-offs approved',d:true},{l:'PO supplied',d:true}]},
+    {num:'76060',rsk:'RSK 103653',date:'Jun 1, 2026',note:"Jr's Custom Vandyke",status:'complete',custom:true,comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',stages:[{l:'Logo proof mocks completed',d:true},{l:'Logo proofs approved',d:true},{l:'Strike-offs approved',d:true},{l:'PO supplied',d:true}]}
+  ]}
+};
+
+function getAllOrders(){
+  let all=[];
+  Object.entries(shops).forEach(([key,shop])=>{
+    shop.orders.forEach((o,i)=>all.push({...o,shopKey:key,shopLabel:shop.label,shopIdx:i}));
+  });
+  return all;
+}
+
+function getStats(shopKey){
+  const orders=shopKey==='all'?getAllOrders():shops[shopKey].orders;
+  return{total:orders.length,action:orders.filter(o=>o.status==='action').length,po:orders.filter(o=>o.po).length,pending:orders.filter(o=>o.status==='pending'||o.status==='review').length};
+}
+
+function tryLogin(){
+  const val=document.getElementById('pw-input').value;
+  if(val===ADMIN_PASS){isAdmin=true;launch();}
+  else if(val.toLowerCase()===PB_PASS){isAdmin=false;launch();}
+  else{document.getElementById('login-error').style.display='block';document.getElementById('pw-input').value='';}
+}
+
+function launch(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('portal').style.display='block';
+  document.getElementById('role-badge').textContent=isAdmin?'Admin — Swannies':'Pebble Beach';
+  document.getElementById('avatar').textContent=isAdmin?'SW':'PB';
+  buildTabs();renderMain();
+}
+
+function logout(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('portal').style.display='none';
+  document.getElementById('pw-input').value='';
+  document.getElementById('login-error').style.display='none';
+  currentShop='all';openCards={};
+}
+
+function buildTabs(){
+  const bar=document.getElementById('tabs-bar');bar.innerHTML='';
+  [{key:'all',label:'All Orders'},...Object.entries(shops).map(([k,s])=>({key:k,label:s.label}))].forEach(t=>{
+    const el=document.createElement('div');
+    el.className='tab'+(t.key===currentShop?' active':'');
+    el.textContent=t.label;
+    el.onclick=()=>{currentShop=t.key;openCards={};document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');renderMain();};
+    bar.appendChild(el);
+  });
+}
+
+function renderMain(){
+  const s=getStats(currentShop);
+  const label=currentShop==='all'?'All Orders':shops[currentShop].label+' — Orders';
+  let html=`<div class="stats-row">
+    <div class="stat-card"><div class="stat-num">${s.total}</div><div class="stat-lbl">Total orders</div></div>
+    <div class="stat-card"><div class="stat-num amber">${s.action}</div><div class="stat-lbl">Need action</div></div>
+    <div class="stat-card"><div class="stat-num green">${s.po}</div><div class="stat-lbl">POs received</div></div>
+    <div class="stat-card"><div class="stat-num blue">${s.pending}</div><div class="stat-lbl">In progress</div></div>
+  </div>
+  <div class="toolbar">
+    <select class="filter-select" onchange="statusFilter=this.value;renderMain()">
+      <option value="all" ${statusFilter==='all'?'selected':''}>All statuses</option>
+      <option value="action" ${statusFilter==='action'?'selected':''}>Action needed</option>
+      <option value="pending" ${statusFilter==='pending'?'selected':''}>Upcoming</option>
+      <option value="review" ${statusFilter==='review'?'selected':''}>In production</option>
+      <option value="complete" ${statusFilter==='complete'?'selected':''}>Complete</option>
+    </select>
+    ${isAdmin?`<button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add order</button><a href="${DRIVE_FOLDER}" target="_blank" class="btn btn-ghost btn-sm">Open Drive folder</a>`:''}
+  </div>
+  <div class="section-head">${label}</div>
+  <div id="orders-list"></div>`;
+  document.getElementById('main-content').innerHTML=html;
+  renderOrders();
+}
+
+function renderOrders(){
+  const list=document.getElementById('orders-list');if(!list)return;
+  let orders=currentShop==='all'
+    ?getAllOrders().filter(o=>statusFilter==='all'||o.status===statusFilter)
+    :shops[currentShop].orders.map((o,i)=>({...o,shopKey:currentShop,shopLabel:shops[currentShop].label,shopIdx:i})).filter(o=>statusFilter==='all'||o.status===statusFilter);
+  list.innerHTML='';
+  if(!orders.length){list.innerHTML='<div style="text-align:center;padding:60px;color:var(--text-soft);font-size:14px;">No orders found.</div>';return;}
+
+  orders.forEach(order=>{
+    const shopKey=order.shopKey||currentShop;
+    const orderIdx=order.shopIdx!==undefined?order.shopIdx:0;
+    const cardKey=shopKey+'_'+orderIdx;
+    const isOpen=openCards[cardKey];
+    const doneCount=order.stages.filter(s=>s.d).length;
+    const statusMap={complete:['Complete','s-complete'],action:['Action needed','s-action'],pending:['Upcoming','s-pending'],review:['In production','s-review']};
+    const [slabel,sclass]=statusMap[order.status]||['—','s-pending'];
+
+    const card=document.createElement('div');
+    card.className='order-card'+(order.status==='action'?' action-needed':'');
+
+    const stagesHtml=order.stages.map((s,si)=>`
+      <div class="stage-row">
+        <div class="stage-dot ${s.d?'done':s.a?'needs-action':''} ${isAdmin?'clickable':''}" ${isAdmin?`onclick="toggleStage('${shopKey}',${orderIdx},${si})"`:''}>
+          ${s.d?'✓':''}
+        </div>
+        <span class="stage-label ${s.d?'done':s.a?'needs-action':''}">${s.l}</span>
+      </div>`).join('');
+
+    const hasProof=order.proofName||order.proofUrl;
+    const proofHtml=hasProof?`
+      <div class="panel">
+        <div class="sub-label">Logo coloring proof</div>
+        ${order.proofUrl
+          ?`<a href="${order.proofUrl}" target="_blank" class="proof-link">📄 ${order.proofName||'View proof'}</a>`
+          :`<div style="font-size:13px;color:var(--text-soft);margin-bottom:14px;">📄 ${order.proofName} <span style="font-size:11px;">(link coming soon)</span></div>`
+        }
+        <div class="proof-actions">
+          <button class="btn btn-approve" onclick="approveProof('${order.num}','${shopKey}')">Approve proof</button>
+          <button class="btn btn-changes" onclick="requestChanges('${order.num}','${shopKey}')">Request changes</button>
+        </div>
+      </div>`:'' ;
+
+    const customFlag=order.custom?`<div class="custom-flag">⚠ Custom order — NO 15% LID discount</div>`:'';
+
+    const poHtml=(order.status==='action'||order.status==='pending')
+      ?`<div class="panel">${customFlag}<div class="sub-label">PO number</div><div class="field-row"><input class="field-input" type="text" id="po-${shopKey}-${orderIdx}" placeholder="e.g. 567664-410" value="${order.po||''}"><button class="btn btn-primary btn-sm" onclick="submitPO('${order.num}','${shopKey}',${orderIdx})">Submit</button></div></div>`
+      :order.po?`<div class="panel"><div class="sub-label">PO on file</div><div class="field-value">${order.po}${order.custom?' <span style="color:var(--red-text);font-size:11px;">(No LID)</span>':''}</div></div>`:'';
+
+    const infoHtml=(order.qty||order.sizes||order.logoInstructions||order.tagInstructions)?`
+      <div class="panel">
+        <div class="sub-label">Order details</div>
+        ${order.qty?`<div style="font-size:12px;color:var(--text-soft);margin-bottom:4px;">Quantities</div><div style="font-size:13px;margin-bottom:10px;">${order.qty}</div>`:''}
+        ${order.sizes?`<div style="font-size:12px;color:var(--text-soft);margin-bottom:4px;">Sizes</div><div style="font-size:13px;margin-bottom:10px;">${order.sizes}</div>`:''}
+        ${order.logoInstructions?`<div style="font-size:12px;color:var(--text-soft);margin-bottom:4px;">Logo instructions</div><div style="font-size:13px;margin-bottom:10px;">${order.logoInstructions}</div>`:''}
+        ${order.tagInstructions?`<div style="font-size:12px;color:var(--text-soft);margin-bottom:4px;">Tagging instructions</div><div style="font-size:13px;">${order.tagInstructions}</div>`:''}
+      </div>`:'' ;
+
+    const qcData=order.qc||{};
+    const qcHtml=isAdmin&&order.qc?`
+      <div class="panel">
+        <div class="sub-label">Warehouse QC</div>
+        <div class="qc-checks">
+          <div class="qc-row"><input type="checkbox" ${qcData.inv?'checked':''} onchange="updateQC('${shopKey}',${orderIdx},'inv',this.checked)"><label>Inventory picked & secured</label></div>
+          <div class="qc-row"><input type="checkbox" ${qcData.emb?'checked':''} onchange="updateQC('${shopKey}',${orderIdx},'emb',this.checked)"><label>Embroidery completed</label></div>
+          <div class="qc-row"><input type="checkbox" ${qcData.tags?'checked':''} onchange="updateQC('${shopKey}',${orderIdx},'tags',this.checked)"><label>Hang tags applied (50+ units)</label></div>
+          <div class="qc-row"><input type="checkbox" ${qcData.qci?'checked':''} onchange="updateQC('${shopKey}',${orderIdx},'qci',this.checked)"><label>QC inspection passed</label></div>
+          <div class="qc-row"><input type="checkbox" ${qcData.packed?'checked':''} onchange="updateQC('${shopKey}',${orderIdx},'packed',this.checked)"><label>Packed & ready to ship</label></div>
+        </div>
+      </div>`:'' ;
+
+    const commentsData=order.comments||[];
+    const commentsHtml=`
+      <div class="comments-section">
+        <div class="sub-label">Notes & comments</div>
+        ${commentsData.map(c=>`<div class="comment"><div class="comment-meta">${c.author} — ${c.time}</div><div class="comment-text">${c.text}</div></div>`).join('')}
+        <div class="comment-input-row">
+          <input class="comment-input" type="text" id="comment-${shopKey}-${orderIdx}" placeholder="Add a note...">
+          <button class="btn btn-ghost btn-sm" onclick="addComment('${shopKey}',${orderIdx})">Post</button>
+        </div>
+      </div>`;
+
+    const adminStrip=isAdmin?`
+      <div class="admin-strip">
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${shopKey}',${orderIdx})">Edit order</button>
+        <button class="btn btn-danger btn-sm" onclick="flagMismatch('${order.num}')">Flag PO mismatch</button>
+      </div>`:
+      `<div class="admin-strip" style="border-top:1px solid var(--border);margin-top:12px;padding-top:12px;grid-column:1/-1;">
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${shopKey}',${orderIdx})">Edit order</button>
+      </div>`;
+
+    card.innerHTML=`
+      <div class="order-header" onclick="toggleCard('${shopKey}',${orderIdx})">
+        <div class="order-left">
+          <div class="order-num">Order #${order.num}</div>
+          <div class="order-meta">
+            ${order.rsk?`<span class="order-rsk">${order.rsk}</span>`:''}
+            ${order.note?`<span class="order-note">${order.note}</span>`:''}
+            ${currentShop==='all'?`<span class="order-shop-tag">${order.shopLabel}</span>`:''}
+          </div>
+        </div>
+        <div class="order-right">
+          <span class="order-date">Due ${order.date}</span>
+          <span class="progress-text">${doneCount}/${order.stages.length} steps</span>
+          <span class="status-pill ${sclass}">${slabel}</span>
+          <span class="chevron ${isOpen?'open':''}">▶</span>
+        </div>
+      </div>
+      <div class="order-body ${isOpen?'open':''}">
+        <div>
+          <div class="sub-label">Order progress</div>
+          <div class="stages">${stagesHtml}</div>
+          ${commentsHtml}
+        </div>
+        <div>
+          ${proofHtml}
+          ${poHtml}
+          ${infoHtml}
+          ${qcHtml}
+        </div>
+        ${adminStrip}
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function toggleCard(shopKey,orderIdx){const key=shopKey+'_'+orderIdx;openCards[key]=!openCards[key];renderOrders();}
+function toggleStage(shopKey,orderIdx,si){shops[shopKey].orders[orderIdx].stages[si].d=!shops[shopKey].orders[orderIdx].stages[si].d;renderOrders();}
+function updateQC(shopKey,orderIdx,field,val){if(!shops[shopKey].orders[orderIdx].qc)shops[shopKey].orders[orderIdx].qc={};shops[shopKey].orders[orderIdx].qc[field]=val;}
+
+function addComment(shopKey,orderIdx){
+  const input=document.getElementById(`comment-${shopKey}-${orderIdx}`);
+  const text=input?.value.trim();if(!text)return;
+  if(!shops[shopKey].orders[orderIdx].comments)shops[shopKey].orders[orderIdx].comments=[];
+  const now=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  shops[shopKey].orders[orderIdx].comments.push({author:isAdmin?'Swannies':'Pebble Beach',time:now,text});
+  openCards[shopKey+'_'+orderIdx]=true;
+  renderOrders();
+}
+
+async function approveProof(orderNum,shopKey){
+  showToast('Submitting approval...');
+  try{
+    await fetch(FORMSPREE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({type:'PROOF APPROVED',order:orderNum,shop:shops[shopKey].label,_subject:`[PB Portal] Proof Approved — Order #${orderNum}`})});
+    showToast('Proof approved — Jen, Tim & Serafine notified.');
+  }catch(e){showToast('Proof approved!');}
+}
+
+async function requestChanges(orderNum,shopKey){
+  const notes=prompt('Describe the changes needed:');if(!notes)return;
+  try{
+    await fetch(FORMSPREE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({type:'PROOF CHANGES REQUESTED',order:orderNum,shop:shops[shopKey].label,changes:notes,_subject:`[PB Portal] Changes Requested — Order #${orderNum}`})});
+    showToast('Change request submitted — team notified.');
+  }catch(e){showToast('Request submitted.');}
+}
+
+async function submitPO(orderNum,shopKey,orderIdx){
+  const val=document.getElementById(`po-${shopKey}-${orderIdx}`)?.value.trim();
+  if(!val){showToast('Please enter a PO number.');return;}
+  try{
+    await fetch(FORMSPREE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({type:'PO SUBMITTED',order:orderNum,shop:shops[shopKey].label,po_number:val,custom:shops[shopKey].orders[orderIdx].custom?'YES — No LID':'No',_subject:`[PB Portal] PO Submitted — Order #${orderNum} — PO ${val}`})});
+    shops[shopKey].orders[orderIdx].po=val;
+    showToast(`PO ${val} submitted — Tim & Serafine notified.`);
+    renderOrders();
+  }catch(e){showToast('PO submitted.');}
+}
+
+async function flagMismatch(orderNum){
+  const notes=prompt('Describe the mismatch (size, qty, pricing):');if(!notes)return;
+  try{
+    await fetch(FORMSPREE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({type:'PO MISMATCH FLAGGED',order:orderNum,mismatch:notes,_subject:`[PB Portal] ⚠ PO Mismatch — Order #${orderNum}`})});
+    showToast('Mismatch flagged — team alerted.');
+  }catch(e){showToast('Flagged.');}
+}
+
+function openEditModal(shopKey,orderIdx){
+  const o=shops[shopKey].orders[orderIdx];
+  document.getElementById('edit-modal-title').textContent=`Edit Order #${o.num}`;
+  document.getElementById('edit-shop-key').value=shopKey;
+  document.getElementById('edit-order-idx').value=orderIdx;
+  document.getElementById('edit-num').value=o.num||'';
+  document.getElementById('edit-rsk').value=o.rsk||'';
+  document.getElementById('edit-date').value=o.date||'';
+  document.getElementById('edit-note').value=o.note||'';
+  document.getElementById('edit-qty').value=o.qty||'';
+  document.getElementById('edit-sizes').value=o.sizes||'';
+  document.getElementById('edit-po').value=o.po||'';
+  document.getElementById('edit-logo-instructions').value=o.logoInstructions||'';
+  document.getElementById('edit-tag-instructions').value=o.tagInstructions||'';
+  document.getElementById('edit-status').value=o.status||'pending';
+
+  // Show/hide admin-only fields
+  const adminFields=document.getElementById('admin-edit-fields');
+  const adminDelete=document.getElementById('admin-delete-btn');
+  if(isAdmin){
+    adminFields.style.display='block';
+    adminDelete.innerHTML=`<button class="btn btn-danger btn-sm" onclick="deleteOrder()">Delete order</button>`;
+    document.getElementById('edit-proof-url').value=o.proofUrl||'';
+    document.getElementById('edit-proof-name').value=o.proofName||'';
+    document.getElementById('edit-custom').checked=!!o.custom;
+    document.getElementById('edit-shop-select').value=shopKey;
+    editStages=o.stages.map(s=>({...s}));
+    renderEditStages();
+  }else{
+    adminFields.style.display='none';
+    adminDelete.innerHTML='';
+  }
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function renderEditStages(){
+  const list=document.getElementById('edit-stages-list');
+  list.innerHTML=editStages.map((s,i)=>`
+    <div class="stage-edit-row">
+      <input type="checkbox" ${s.d?'checked':''} onchange="editStages[${i}].d=this.checked">
+      <span>${s.l}</span>
+      <button class="remove-stage" onclick="editStages.splice(${i},1);renderEditStages()">✕</button>
+    </div>`).join('');
+}
+
+function addEditStage(){
+  const input=document.getElementById('new-stage-input');
+  const val=input.value.trim();if(!val)return;
+  editStages.push({l:val,d:false});input.value='';renderEditStages();
+}
+
+function saveEditOrder(){
+  const shopKey=document.getElementById('edit-shop-key').value;
+  const orderIdx=parseInt(document.getElementById('edit-order-idx').value);
+  const o=shops[shopKey].orders[orderIdx];
+  o.num=document.getElementById('edit-num').value;
+  o.rsk=document.getElementById('edit-rsk').value;
+  o.date=document.getElementById('edit-date').value;
+  o.note=document.getElementById('edit-note').value;
+  o.qty=document.getElementById('edit-qty').value;
+  o.sizes=document.getElementById('edit-sizes').value;
+  o.po=document.getElementById('edit-po').value;
+  o.logoInstructions=document.getElementById('edit-logo-instructions').value;
+  o.tagInstructions=document.getElementById('edit-tag-instructions').value;
+  o.status=document.getElementById('edit-status').value;
+  if(isAdmin){
+    o.proofUrl=document.getElementById('edit-proof-url').value;
+    o.proofName=document.getElementById('edit-proof-name').value;
+    o.custom=document.getElementById('edit-custom').checked;
+    o.stages=[...editStages];
+    const newShopKey=document.getElementById('edit-shop-select').value;
+    if(newShopKey!==shopKey){shops[newShopKey].orders.push({...o});shops[shopKey].orders.splice(orderIdx,1);}
+  }
+  closeEditModal();openCards={};renderMain();showToast('Order updated.');
+  // Notify team if PB made changes
+  if(!isAdmin){
+    fetch(FORMSPREE,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({type:'ORDER UPDATED BY PB',order:o.num,shop:shops[shopKey].label,_subject:`[PB Portal] Order Updated — #${o.num}`})}).catch(()=>{});
+  }
+}
+
+function deleteOrder(){
+  const shopKey=document.getElementById('edit-shop-key').value;
+  const orderIdx=parseInt(document.getElementById('edit-order-idx').value);
+  const o=shops[shopKey].orders[orderIdx];
+  if(!confirm(`Delete Order #${o.num}? This cannot be undone.`))return;
+  shops[shopKey].orders.splice(orderIdx,1);
+  closeEditModal();openCards={};renderMain();showToast('Order deleted.');
+}
+
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('open');}
+
+function openAddModal(){
+  ['new-num','new-rsk','new-date','new-note','new-po'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-custom').checked=false;
+  document.getElementById('new-status').value='pending';
+  if(currentShop!=='all')document.getElementById('new-shop').value=currentShop;
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function closeAddModal(){document.getElementById('add-modal').classList.remove('open');}
+
+function saveNewOrder(){
+  const num=document.getElementById('new-num').value.trim();
+  if(!num){showToast('Order number is required.');return;}
+  const shopKey=document.getElementById('new-shop').value;
+  shops[shopKey].orders.push({
+    num,rsk:document.getElementById('new-rsk').value.trim(),
+    date:document.getElementById('new-date').value.trim()||'TBD',
+    note:document.getElementById('new-note').value.trim(),
+    po:document.getElementById('new-po').value.trim()||undefined,
+    custom:document.getElementById('new-custom').checked,
+    status:document.getElementById('new-status').value,
+    comments:[],qty:'',sizes:'',logoInstructions:'',tagInstructions:'',
+    qc:{inv:false,emb:false,tags:false,qci:false,packed:false},
+    stages:defaultStages()
+  });
+  closeAddModal();
+  if(currentShop!=='all'&&currentShop!==shopKey){currentShop=shopKey;buildTabs();}
+  renderMain();showToast(`Order #${num} added.`);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+</script>
+</body>
+</html>
